@@ -169,32 +169,34 @@ class BNLJOperator extends JoinOperator {
                             fetchNextLeftBlock();
                             resetRightIterator();
                         }
-
                     }
-
-
                 }
+                if (this.leftRecord == null) //whole left table has done, no matching record any more
+                    break;
             }
 
         }
 
         private void nextLeftRecord(){
+            //getting next left record within a block
             this.leftRecord = this.leftRecordIterator.next();
         }
 
         private  void resetRightIterator(){
+            //when a block of left table done matching with whole right table, reset to begin of the right table
             this.rightIterator.reset();
             fetchNextRightPage();
         }
 
         private void resetLeftRecordIterator(){
+            //done matching of a page of right table, reset to the begin of block for matching next right table page
             this.leftRecordIterator.reset();
             assert(rightRecordIterator.hasNext());
             this.leftRecord = this.leftRecordIterator.next();
         }
 
         private void resetRightRecordIterator(){
-            this.rightRecordIterator.reset();  //reset to begin of the page
+            this.rightRecordIterator.reset();  //reset to begin of the page to match with next left record
             assert(rightRecordIterator.hasNext());
             this.rightRecord = this.rightRecordIterator.next();
         }
