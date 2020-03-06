@@ -96,10 +96,13 @@ class BNLJOperator extends JoinOperator {
                 this.leftRecordIterator = null;
                 this.leftRecord = null;
                 //System.out.println("No new page in left relation to fetch");
-                return;
             }
-            this.leftRecordIterator = BNLJOperator.this.getBlockIterator(this.getLeftTableName(), this.leftIterator, BNLJOperator.this.numBuffers-2);
-            this.leftRecord = this.leftRecordIterator.next();
+            else{
+                this.leftRecordIterator = BNLJOperator.this.getBlockIterator(this.getLeftTableName(), this.leftIterator, BNLJOperator.this.numBuffers-2);
+                this.leftRecordIterator.markNext(); //mark the begin of a block
+                this.leftRecord = this.leftRecordIterator.next();
+            }
+
         }
 
         /**
@@ -112,17 +115,15 @@ class BNLJOperator extends JoinOperator {
          */
         private void fetchNextRightPage() {
             // TODO(proj3_part1): implement
-            if (!this.leftRecordIterator.hasNext()){
-                this.rightRecordIterator = null;
-                //System.out.println("No new page in left relation to fetch");
-                return;
-            }
             if (!this.rightIterator.hasNext()){
-                this.rightIterator.reset();
-                this.rightIterator.markNext();
+                this.rightRecordIterator = null;
             }
-            this.rightRecordIterator = BNLJOperator.this.getBlockIterator(this.getRightTableName(), this.rightIterator, 1);
-            this.rightRecord = this.rightRecordIterator.next();
+            else{
+                this.rightRecordIterator = BNLJOperator.this.getBlockIterator(this.getRightTableName(), this.rightIterator, 1);
+                this.rightRecordIterator.markNext(); //mark the begin of a page
+                this.rightRecord = this.rightRecordIterator.next();
+            }
+
         }
 
         /**
@@ -136,43 +137,66 @@ class BNLJOperator extends JoinOperator {
             if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
             this.nextRecord = null;
             while(!hasNext()){ //equals to nextRecord==null, means that while loop will continue to run until find nextRecord
+                //iterate though one page of right table
                 if (this.rightRecord != null){
-                    //iterate thorugh all right table records
+                    //same process as SNLJ
                     DataBox leftJoinValue = this.leftRecord.getValues().get(BNLJOperator.this.getLeftColumnIndex());
                     DataBox rightJoinValue = this.rightRecord.getValues().get(BNLJOperator.this.getRightColumnIndex());
                     if (leftJoinValue.equals(rightJoinValue)){
                         this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
-                        return;
                     }
                     this.rightRecord = this.rightRecordIterator.hasNext()? rightRecordIterator.next(): null;
                 }
                 else{
-                    nextLeftRecord();
-                    resetRightRecord();
+                    //after that, advance left record, continue iterate through same page of right table
+                    if (this.leftRecordIterator.hasNext()) {
+                        nextLeftRecord();
+                        //reset right record iterator to begin of the page for the new left record
+                        resetRightRecordIterator();
+                    }
+                    else{
+                        if (rightIterator.hasNext()){
+                            //done iterate through a block of left table matching with one page of right table
+                            //reset leftRecordIterator to the begin of the block
+                            //then fetch next right page to match
+                            resetLeftRecordIterator();
+                            fetchNextRightPage();
+                        }
+                        else{
+                            //a block of left table has done matching with the whole right table
+                            //fetch next block of left table
+                            //reset right iterator to begin of right table
+                            fetchNextLeftBlock();
+                            resetRightIterator();
+                        }
+
+                    }
+
+
                 }
             }
 
         }
 
         private void nextLeftRecord(){
-            if (!this.leftRecordIterator.hasNext()){
-                fetchNextLeftBlock();
-                return;
-            }
             this.leftRecord = this.leftRecordIterator.next();
         }
 
-        private  void resetLeftRecord(){
-            this.leftRecordIterator.reset();
-            assert(leftRecordIterator.hasNext());
-            this.leftRecord = leftRecordIterator.next();
+        private  void resetRightIterator(){
+            this.rightIterator.reset();
+            fetchNextRightPage();
         }
 
-        private void resetRightRecord(){
-            this.rightRecordIterator.reset();
+        private void resetLeftRecordIterator(){
+            this.leftRecordIterator.reset();
             assert(rightRecordIterator.hasNext());
-            this.rightRecord = rightRecordIterator.next();
-            fetchNextRightPage();
+            this.leftRecord = this.leftRecordIterator.next();
+        }
+
+        private void resetRightRecordIterator(){
+            this.rightRecordIterator.reset();  //reset to begin of the page
+            assert(rightRecordIterator.hasNext());
+            this.rightRecord = this.rightRecordIterator.next();
         }
 
         /**
