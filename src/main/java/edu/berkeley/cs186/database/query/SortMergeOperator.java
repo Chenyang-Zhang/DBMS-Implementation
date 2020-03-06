@@ -102,6 +102,7 @@ class SortMergeOperator extends JoinOperator {
                 if (leftJoinValue.equals(rightJoinValue)) {
                     this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
                     this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
+                    return;
                 }
                 else{
                     this.rightIterator.reset();
