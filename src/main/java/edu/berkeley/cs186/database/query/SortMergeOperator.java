@@ -58,6 +58,14 @@ class SortMergeOperator extends JoinOperator {
         private SortMergeIterator() {
             super();
             // TODO(proj3_part1): implement
+            //first sort two tables
+            SortOperator sort_left = new SortOperator(getTransaction(), getLeftTableName(), new LeftRecordComparator());
+            SortOperator sort_right = new SortOperator(getTransaction(), getRightTableName(), new RightRecordComparator());
+            String sortedLeftTableName  = sort_left.sort();
+            String sortedRightTableName = sort_right.sort();
+            this.leftIterator = SortMergeOperator.this.getRecordIterator(sortedLeftTableName);
+            this.rightIterator = SortMergeOperator.this.getRecordIterator(sortedRightTableName);
+
         }
 
         /**
