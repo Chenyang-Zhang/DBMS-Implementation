@@ -134,6 +134,7 @@ class BNLJOperator extends JoinOperator {
          */
         private void fetchNextRecord() {
             // TODO(proj3_part1): implement
+            //this question I get the hint of the procedure from https://piazza.com/class/k5ecyhh3xdw1dd?cid=339_f1, Jie Luo's example, and I complete follow that logic
             if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
             this.nextRecord = null;
             while(!hasNext()){ //equals to nextRecord==null, means that while loop will continue to run until find nextRecord

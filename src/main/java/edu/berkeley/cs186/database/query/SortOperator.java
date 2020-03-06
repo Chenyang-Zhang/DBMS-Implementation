@@ -72,12 +72,12 @@ public class SortOperator {
      */
     public Run sortRun(Run run) {
         // TODO(proj3_part1): implement
-        Iterator<Record> itr = run.iterator();
+        Iterator<Record> itr = run.iterator(); //get iterator
         List<Record> temp = new ArrayList<>(); //temporary store record and then sort them
         while (itr.hasNext()){
             temp.add(itr.next()); //add record to temp for sort
         }
-        Collections.sort(temp, comparator);
+        Collections.sort(temp, this.comparator); //sort record
         Run new_run = createRun();
         new_run.addRecords(temp); //add sorted records back to new_run
         return new_run;
