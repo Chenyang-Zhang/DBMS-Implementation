@@ -57,6 +57,9 @@ class SortMergeOperator extends JoinOperator {
         private Record rightRecord;
         private boolean marked;
 
+        private  DataBox leftJoinValue;
+        private DataBox rightJoinValue;
+
         private SortMergeIterator() {
             super();
             // TODO(proj3_part1): implement
@@ -82,9 +85,9 @@ class SortMergeOperator extends JoinOperator {
         private void fetchNextRecord(){
             if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
             this.nextRecord = null;
+
             while(!hasNext()) {
-                DataBox leftJoinValue = this.leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
-                DataBox rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
+                updateJoinValue();
                 if (!marked) {
                     while (leftJoinValue.compareTo(rightJoinValue) < 0){
                         this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
@@ -95,6 +98,7 @@ class SortMergeOperator extends JoinOperator {
                     marked = true;
                     this.rightIterator.markPrev();
                 }
+                updateJoinValue();
                 if (leftJoinValue.equals(rightJoinValue)) {
                     this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
                     this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
@@ -105,6 +109,11 @@ class SortMergeOperator extends JoinOperator {
                     marked = false;
                 }
             }
+        }
+
+        private  void updateJoinValue(){
+            this.leftJoinValue = this.leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
+            this.rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
         }
 
         private Record joinRecords(Record leftRecord, Record rightRecord) {
