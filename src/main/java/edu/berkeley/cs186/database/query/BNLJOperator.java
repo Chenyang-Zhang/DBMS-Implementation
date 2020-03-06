@@ -61,6 +61,9 @@ class BNLJOperator extends JoinOperator {
         private Record leftRecord = null;
         // The next record to return
         private Record nextRecord = null;
+        // The current record on the right page
+        private Record rightRecord = null;
+
 
         private BNLJIterator() {
             super();
@@ -89,6 +92,14 @@ class BNLJOperator extends JoinOperator {
          */
         private void fetchNextLeftBlock() {
             // TODO(proj3_part1): implement
+            if (!this.leftIterator.hasNext()) {
+                this.leftRecordIterator = null;
+                this.leftRecord = null;
+                //System.out.println("No new page in left relation to fetch");
+                return;
+            }
+            this.leftRecordIterator = BNLJOperator.this.getBlockIterator(this.getLeftTableName(), this.leftIterator, BNLJOperator.this.numBuffers-2);
+            this.leftRecord = this.leftRecordIterator.next();
         }
 
         /**
@@ -96,11 +107,22 @@ class BNLJOperator extends JoinOperator {
          * should be set to a record iterator over the next page of the right relation that
          * has a record in it.
          *
-         * If there are no more pages in the left relation with records, rightRecordIterator
+         * If there are no more pages in the right relation with records, rightRecordIterator
          * should be set to null.
          */
         private void fetchNextRightPage() {
             // TODO(proj3_part1): implement
+            if (!this.leftRecordIterator.hasNext()){
+                this.rightRecordIterator = null;
+                //System.out.println("No new page in left relation to fetch");
+                return;
+            }
+            if (!this.rightIterator.hasNext()){
+                this.rightIterator.reset();
+                this.rightIterator.markNext();
+            }
+            this.rightRecordIterator = BNLJOperator.this.getBlockIterator(this.getRightTableName(), this.rightIterator, 1);
+            this.rightRecord = this.rightRecordIterator.next();
         }
 
         /**
@@ -111,6 +133,46 @@ class BNLJOperator extends JoinOperator {
          */
         private void fetchNextRecord() {
             // TODO(proj3_part1): implement
+            if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
+            this.nextRecord = null;
+            while(!hasNext()){ //equals to nextRecord==null, means that while loop will continue to run until find nextRecord
+                if (this.rightRecord != null){
+                    //iterate thorugh all right table records
+                    DataBox leftJoinValue = this.leftRecord.getValues().get(BNLJOperator.this.getLeftColumnIndex());
+                    DataBox rightJoinValue = this.rightRecord.getValues().get(BNLJOperator.this.getRightColumnIndex());
+                    if (leftJoinValue.equals(rightJoinValue)){
+                        this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
+                        return;
+                    }
+                    this.rightRecord = this.rightRecordIterator.hasNext()? rightRecordIterator.next(): null;
+                }
+                else{
+                    nextLeftRecord();
+                    resetRightRecord();
+                }
+            }
+
+        }
+
+        private void nextLeftRecord(){
+            if (!this.leftRecordIterator.hasNext()){
+                fetchNextLeftBlock();
+                return;
+            }
+            this.leftRecord = this.leftRecordIterator.next();
+        }
+
+        private  void resetLeftRecord(){
+            this.leftRecordIterator.reset();
+            assert(leftRecordIterator.hasNext());
+            this.leftRecord = leftRecordIterator.next();
+        }
+
+        private void resetRightRecord(){
+            this.rightRecordIterator.reset();
+            assert(rightRecordIterator.hasNext());
+            this.rightRecord = rightRecordIterator.next();
+            fetchNextRightPage();
         }
 
         /**
