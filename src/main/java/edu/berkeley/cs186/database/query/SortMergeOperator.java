@@ -63,9 +63,26 @@ class SortMergeOperator extends JoinOperator {
             SortOperator sort_right = new SortOperator(getTransaction(), getRightTableName(), new RightRecordComparator());
             String sortedLeftTableName  = sort_left.sort();
             String sortedRightTableName = sort_right.sort();
-            this.leftIterator = SortMergeOperator.this.getRecordIterator(sortedLeftTableName);
-            this.rightIterator = SortMergeOperator.this.getRecordIterator(sortedRightTableName);
+            this.leftIterator = SortMergeOperator.this.getTableIterator(sortedLeftTableName);
+            this.rightIterator = SortMergeOperator.this.getTableIterator(sortedRightTableName);
 
+            try{
+                this.fetchNextRecord();
+            }catch(NoSuchElementException e){
+                this.nextRecord = null;
+            }
+
+        }
+
+        private void fetchNextRecord(){
+
+        }
+
+        private Record joinRecords(Record leftRecord, Record rightRecord) {
+            List<DataBox> leftValues = new ArrayList<>(leftRecord.getValues());
+            List<DataBox> rightValues = new ArrayList<>(rightRecord.getValues());
+            leftValues.addAll(rightValues);
+            return new Record(leftValues);
         }
 
         /**
@@ -76,8 +93,7 @@ class SortMergeOperator extends JoinOperator {
         @Override
         public boolean hasNext() {
             // TODO(proj3_part1): implement
-
-            return false;
+            return this.nextRecord != null;
         }
 
         /**
@@ -89,8 +105,17 @@ class SortMergeOperator extends JoinOperator {
         @Override
         public Record next() {
             // TODO(proj3_part1): implement
+            if (!this.hasNext()){
+                throw new NoSuchElementException();
+            }
 
-            throw new NoSuchElementException();
+            Record nextRecord = this.nextRecord;
+            try{
+                this.fetchNextRecord();
+            }catch(NoSuchElementException e){
+                this.nextRecord = null;
+            }
+            return nextRecord;
         }
 
         @Override
