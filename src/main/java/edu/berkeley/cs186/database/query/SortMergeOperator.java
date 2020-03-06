@@ -7,6 +7,8 @@ import edu.berkeley.cs186.database.common.iterator.BacktrackingIterator;
 import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.table.Record;
 
+import javax.xml.crypto.Data;
+
 class SortMergeOperator extends JoinOperator {
     SortMergeOperator(QueryOperator leftSource,
                       QueryOperator rightSource,
@@ -65,6 +67,9 @@ class SortMergeOperator extends JoinOperator {
             String sortedRightTableName = sort_right.sort();
             this.leftIterator = SortMergeOperator.this.getTableIterator(sortedLeftTableName);
             this.rightIterator = SortMergeOperator.this.getTableIterator(sortedRightTableName);
+            this.leftRecord = this.leftIterator.next();
+            this.rightRecord = this.rightIterator.next();
+            this.marked = false;
 
             try{
                 this.fetchNextRecord();
@@ -75,7 +80,31 @@ class SortMergeOperator extends JoinOperator {
         }
 
         private void fetchNextRecord(){
-
+            if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
+            this.nextRecord = null;
+            while(!hasNext()) {
+                DataBox leftJoinValue = this.leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
+                DataBox rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
+                if (!marked) {
+                    while (leftJoinValue.compareTo(rightJoinValue) < 0){
+                        this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
+                    }
+                    while (leftJoinValue.compareTo(rightJoinValue) > 0){
+                        this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
+                    }
+                    marked = true;
+                    this.rightIterator.markPrev();
+                }
+                if (leftJoinValue.equals(rightJoinValue)) {
+                    this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
+                    this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
+                }
+                else{
+                    this.rightIterator.reset();
+                    this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
+                    marked = false;
+                }
+            }
         }
 
         private Record joinRecords(Record leftRecord, Record rightRecord) {
