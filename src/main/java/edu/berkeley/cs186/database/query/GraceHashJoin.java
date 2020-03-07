@@ -65,6 +65,10 @@ public class GraceHashJoin {
         // starting point. Make sure to use the hash function we provide to you
         // by calling hashFunc.apply(databox) to get an integer valued hash code
         // from a DataBox object.
+        while (records.hasNext()){
+            Record record = records.next();
+            DataBox columnValue = record
+        }
 
         return;
     }
@@ -181,8 +185,12 @@ public class GraceHashJoin {
         // TODO(proj3_part1): create an array of partitions
         // You may find the provided helper function
         // createPartition() useful here.
-
-        return null;
+        int usableBuffers = this.numBuffers - 1;
+        HashPartition partitions[] = new HashPartition[usableBuffers];
+        for (int i = 0l i < usableBuffers; i++) {
+            partitions[i] = createPartition();
+        }
+        return partitions;
     }
 
     // Feel free to add your own helper methods here if you wish to do so
