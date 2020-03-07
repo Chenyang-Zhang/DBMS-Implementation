@@ -67,7 +67,18 @@ public class GraceHashJoin {
         // from a DataBox object.
         while (records.hasNext()){
             Record record = records.next();
-            DataBox columnValue = record
+            DataBox columnValue = record.getValues().get(columnIndex);
+            int hash = hashFunc.apply(columnValue);
+            int partitionNum = (hash % partitions.length);
+            if (partitionNum < 0){
+                partitionNum += partitions.length;
+            }
+            if (left){
+                partitions[partitionNum].addLeftRecord(record);
+            }
+            else{
+                partitions[partitionNum].addRightRecord(record);
+            }
         }
 
         return;
