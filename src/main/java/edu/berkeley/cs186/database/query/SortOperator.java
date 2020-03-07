@@ -154,7 +154,7 @@ public class SortOperator {
         //pass 1, 2 until one sorted run left
         while(true){
             if (sorted_runs.size() == 1)
-                break; //when there is only one sorted run, sorting done
+                break; //when there is only one sorted run, sorting has done
             sorted_runs = mergePass(sorted_runs);
         }
         return sorted_runs.get(0).tableName(); // TODO(proj3_part1): replace this!

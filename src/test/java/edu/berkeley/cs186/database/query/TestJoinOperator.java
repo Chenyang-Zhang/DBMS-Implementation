@@ -439,6 +439,8 @@ public class TestJoinOperator {
                 Record r = outputIterator.next();
                 assertEquals("mismatch at record " + numRecords, r, expectedRecord);
                 numRecords++;
+                if (numRecords == 159999)
+                    System.out.println("hello");
             }
             checkIOs(0);
 

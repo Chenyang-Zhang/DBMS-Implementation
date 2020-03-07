@@ -70,8 +70,8 @@ class SortMergeOperator extends JoinOperator {
             SortOperator sort_right = new SortOperator(getTransaction(), getRightTableName(), new RightRecordComparator());
             String sortedLeftTableName  = sort_left.sort();
             String sortedRightTableName = sort_right.sort();
-            this.leftIterator = SortMergeOperator.this.getTableIterator(sortedLeftTableName);
-            this.rightIterator = SortMergeOperator.this.getTableIterator(sortedRightTableName);
+            this.leftIterator = getTableIterator(sortedLeftTableName);
+            this.rightIterator = getTableIterator(sortedRightTableName);
             this.leftRecord = this.leftIterator.next();
             this.rightRecord = this.rightIterator.next();
             this.marked = false;
@@ -91,6 +91,8 @@ class SortMergeOperator extends JoinOperator {
 
             while(!hasNext()) {
                 updateJoinValue();
+                if (this.rightRecord == null)
+                    break;
                 if (!marked) {
                     while (leftJoinValue.compareTo(rightJoinValue) < 0){
                         this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
@@ -122,12 +124,19 @@ class SortMergeOperator extends JoinOperator {
             if (this.leftRecord == null){
                 throw new NoSuchElementException("No new record to fetch");
             }
-            if (this.rightRecord == null && this.leftIterator.hasNext()){
-                this.rightIterator.reset();
-                this.rightRecord = this.rightIterator.next();
+            if (this.rightRecord == null){
+                if (this.leftIterator.hasNext()){
+                    this.rightIterator.reset();
+                    this.rightRecord = this.rightIterator.next();
+                    this.leftRecord = this.leftIterator.next();
+                    marked = false;
+                }
+
+
             }
             this.leftJoinValue = this.leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
-            this.rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
+            if (this.rightRecord != null)
+                this.rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
         }
 
         private Record joinRecords(Record leftRecord, Record rightRecord) {
@@ -145,7 +154,7 @@ class SortMergeOperator extends JoinOperator {
         @Override
         public boolean hasNext() {
             // TODO(proj3_part1): implement
-            return this.nextRecord != null && this.leftIterator.hasNext();
+            return this.nextRecord != null;
         }
 
         /**
