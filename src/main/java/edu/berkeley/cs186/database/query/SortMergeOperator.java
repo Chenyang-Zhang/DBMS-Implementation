@@ -60,6 +60,8 @@ class SortMergeOperator extends JoinOperator {
         private  DataBox leftJoinValue;
         private DataBox rightJoinValue;
 
+        int i = 0;
+
         private SortMergeIterator() {
             super();
             // TODO(proj3_part1): implement
@@ -85,27 +87,31 @@ class SortMergeOperator extends JoinOperator {
         private void fetchNextRecord(){
             if (this.leftRecord == null) { throw new NoSuchElementException("No new record to fetch"); }
             this.nextRecord = null;
+            updateJoinValue();
 
             while(!hasNext()) {
                 updateJoinValue();
                 if (!marked) {
                     while (leftJoinValue.compareTo(rightJoinValue) < 0){
                         this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
+                        updateJoinValue();
                     }
                     while (leftJoinValue.compareTo(rightJoinValue) > 0){
                         this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
+                        updateJoinValue();
                     }
                     marked = true;
                     this.rightIterator.markPrev();
                 }
-                updateJoinValue();
+                //updateJoinValue();
                 if (leftJoinValue.equals(rightJoinValue)) {
                     this.nextRecord = joinRecords(this.leftRecord, this.rightRecord);
                     this.rightRecord = this.rightIterator.hasNext()? this.rightIterator.next(): null;
-                    return;
+                    //return;
                 }
                 else{
                     this.rightIterator.reset();
+                    this.rightRecord = this.rightIterator.next();
                     this.leftRecord = this.leftIterator.hasNext()? this.leftIterator.next(): null;
                     marked = false;
                 }
@@ -113,6 +119,13 @@ class SortMergeOperator extends JoinOperator {
         }
 
         private  void updateJoinValue(){
+            if (this.leftRecord == null){
+                throw new NoSuchElementException("No new record to fetch");
+            }
+            if (this.rightRecord == null && this.leftIterator.hasNext()){
+                this.rightIterator.reset();
+                this.rightRecord = this.rightIterator.next();
+            }
             this.leftJoinValue = this.leftRecord.getValues().get(SortMergeOperator.this.getLeftColumnIndex());
             this.rightJoinValue = this.rightRecord.getValues().get(SortMergeOperator.this.getRightColumnIndex());
         }
@@ -132,7 +145,7 @@ class SortMergeOperator extends JoinOperator {
         @Override
         public boolean hasNext() {
             // TODO(proj3_part1): implement
-            return this.nextRecord != null;
+            return this.nextRecord != null && this.leftIterator.hasNext();
         }
 
         /**

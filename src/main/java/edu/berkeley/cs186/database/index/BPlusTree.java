@@ -14,7 +14,9 @@ import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.io.DiskSpaceManager;
 import edu.berkeley.cs186.database.memory.BufferManager;
+import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.RecordId;
+import edu.berkeley.cs186.database.table.RecordIterator;
 
 /**
  * A persistent B+ tree.
@@ -137,9 +139,14 @@ public class BPlusTree {
     public Optional<RecordId> get(DataBox key) {
         typecheck(key);
         // TODO(proj2): implement
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj4_part3): B+ tree locking
+=======
+        LeafNode leaf = root.get(key); //get leafNode contains key
+        return leaf.getKey(key);  //get rid from leaf node
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
-        return Optional.empty();
     }
 
     /**
@@ -189,10 +196,18 @@ public class BPlusTree {
      * memory will receive 0 points.
      */
     public Iterator<RecordId> scanAll() {
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj2): Return a BPlusTreeIterator.
         // TODO(proj4_part3): B+ tree locking
+=======
+        // TODO(proj2): Return a BPlusTreeIterator
+        BPlusTreeIterator itr = new BPlusTreeIterator(); //generate iterator
+        if (itr.hasNext()) // if itr has next, return it
+            return itr;
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
-        return Collections.emptyIterator();
+        return Collections.emptyIterator(); //otherwise, return empty iterator
     }
 
     /**
@@ -221,9 +236,16 @@ public class BPlusTree {
     public Iterator<RecordId> scanGreaterEqual(DataBox key) {
         typecheck(key);
         // TODO(proj2): Return a BPlusTreeIterator.
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj4_part3): B+ tree locking
+=======
+        BPlusTreeIterator itr = new BPlusTreeIterator(key); //generate iterator
+        if (itr.hasNext()) // if itr has next, return it
+            return itr;
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
-        return Collections.emptyIterator();
+        return Collections.emptyIterator(); //otherwise, itr don't has next, return empty iterator
     }
 
     /**
@@ -238,7 +260,26 @@ public class BPlusTree {
     public void put(DataBox key, RecordId rid) {
         typecheck(key);
         // TODO(proj2): implement
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj4_part3): B+ tree locking
+=======
+        Optional<Pair<DataBox, Long>> pair = root.put(key, rid);
+        if (pair.isPresent()){ //this means root overflow, need to construct new root
+            DataBox new_key = pair.get().getFirst();
+            long new_node_page_num = pair.get().getSecond();
+            List<DataBox> new_keys = new ArrayList<>();
+            List<Long> new_children = new ArrayList<>();
+            new_keys.add(new_key);
+            new_children.add(0, root.getPage().getPageNum());
+            new_children.add(1, new_node_page_num);
+            //construct new root
+            InnerNode new_root= new InnerNode(metadata, bufferManager, new_keys, new_children, lockContext);
+            updateRoot(new_root); //update
+        }
+
+
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
         return;
     }
@@ -262,7 +303,32 @@ public class BPlusTree {
      */
     public void bulkLoad(Iterator<Pair<DataBox, RecordId>> data, float fillFactor) {
         // TODO(proj2): implement
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj4_part3): B+ tree locking
+=======
+        if (!(root instanceof LeafNode) || ((LeafNode) root).scanAll().hasNext()){
+            //for an empty tree, root must be a leafNode and don't have any keys or rids
+            throw new BPlusTreeException("Tree is not Empty!");
+        }
+        //most copy from put method, very similar
+        while (data.hasNext()) {
+            Optional<Pair<DataBox, Long>> pair = root.bulkLoad(data, fillFactor);
+            if (pair.isPresent()) { //this means root overflow
+                DataBox new_key = pair.get().getFirst();
+                long new_node_page_num = pair.get().getSecond();
+                List<DataBox> new_keys = new ArrayList<>();
+                List<Long> new_children = new ArrayList<>();
+                new_keys.add(new_key);
+                new_children.add(0, root.getPage().getPageNum());
+                new_children.add(1, new_node_page_num);
+                //construct new root
+                InnerNode new_root = new InnerNode(metadata, bufferManager, new_keys, new_children, lockContext);
+                updateRoot(new_root);
+
+            }
+        }
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
         return;
     }
@@ -281,7 +347,12 @@ public class BPlusTree {
     public void remove(DataBox key) {
         typecheck(key);
         // TODO(proj2): implement
+<<<<<<< 99ee38b49e179783072c0ccd8ae46f0ba87505e9
         // TODO(proj4_part3): B+ tree locking
+=======
+        root.remove(key);
+        // TODO(proj4_part2): B+ tree locking
+>>>>>>> proj3 part1 sortmergejoin
 
         return;
     }
@@ -385,18 +456,48 @@ public class BPlusTree {
     // Iterator ////////////////////////////////////////////////////////////////
     private class BPlusTreeIterator implements Iterator<RecordId> {
         // TODO(proj2): Add whatever fields and constructors you want here.
+        private LeafNode leafNode; //find leafNode to iterate
+        private Iterator<RecordId> itr; //iterator instance
+
+        //Construct and initialize a new Iterator
+
+        // for scanAll()
+        public BPlusTreeIterator(){
+            leafNode = root.getLeftmostLeaf(); //start from left most leaf node and move right
+            itr = leafNode.scanAll(); //generate iterator
+        }
+
+        //Overload for scanGreaterEqual()
+        public BPlusTreeIterator(DataBox key){
+            leafNode = root.get(key); //start from leaf node who holds key and move right
+            itr = leafNode.scanGreaterEqual(key); //generate iterator
+        }
 
         @Override
         public boolean hasNext() {
             // TODO(proj2): implement
-
-            return false;
+            if (itr.hasNext()) //Case 1 itr has next value
+                return true;
+            else if (leafNode.getRightSibling().isPresent()){ //right sibling exists
+                if (leafNode.getRightSibling().get().scanAll().hasNext())
+                    return true; // Case 2 current leaf node has right sibling and it has next value
+            }
+            return false; // otherwise no next value
         }
 
         @Override
         public RecordId next() {
             // TODO(proj2): implement
-
+            if (hasNext()){
+                if (itr.hasNext()) //Case 1 if itr has next value, just return it
+                    return itr.next();
+                else{ //otherwise, get current leafNode's rightsibling and update itr to continue iterate
+                    leafNode = leafNode.getRightSibling().get();
+                    itr = leafNode.scanAll();
+                    return itr.next();
+                }
+            }
+            //if don't have next, throw Exception
             throw new NoSuchElementException();
         }
     }
