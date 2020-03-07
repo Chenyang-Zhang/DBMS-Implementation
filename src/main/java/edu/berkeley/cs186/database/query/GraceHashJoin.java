@@ -132,6 +132,32 @@ public class GraceHashJoin {
         // You shouldn't refer to any variable starting with "left" or "right" here
         // Use the "build" and "probe" variables we set up for you
         // Check out how NaiveHashJoin implements this function if you feel stuck.
+        //hash table to build on
+        Map<DataBox, List<Record>> hashTable = new HashMap<>();
+
+        //Building stage
+        while(buildRecords.hasNext()) {
+            Record buildRecord = buildRecords.next();
+            DataBox buildJoinValue = buildRecord.getValues().get(buildColumnIndex);
+
+            if (!hashTable.containsKey(buildJoinValue)) {
+                hashTable.put(buildJoinValue, new ArrayList<>());
+            }
+            hashTable.get(buildJoinValue).add(buildRecord);
+        }
+
+        //Probing stage
+        while (probeRecords.hasNext()){
+            Record probeRecord = probeRecords.next();
+            DataBox probeJoinValue = probeRecord.getValues().get(probeColumnIndex);
+
+            if (hashTable.containsKey(probeJoinValue)) {
+                for (Record bRecord : hashTable.get(probeJoinValue)) {
+                    Record joinedRecord  = joinRecords(bRecord, probeRecord, probeFirst);
+                    joinedRecords.add(joinedRecord);
+                }
+            }
+        }
 
         // Return the records
         return joinedRecords;
@@ -198,7 +224,7 @@ public class GraceHashJoin {
         // createPartition() useful here.
         int usableBuffers = this.numBuffers - 1;
         HashPartition partitions[] = new HashPartition[usableBuffers];
-        for (int i = 0l i < usableBuffers; i++) {
+        for (int i = 0; i < usableBuffers; i++) {
             partitions[i] = createPartition();
         }
         return partitions;
