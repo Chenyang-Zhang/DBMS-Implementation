@@ -155,6 +155,7 @@ abstract class BPlusNode {
      * (not inner nodes), and calculations should round up, i.e. with d=5
      * and fillFactor=0.75, leaf nodes should be 8/10 full.
      */
+    public abstract LeafNode getRightmostLeaf(); //helper method
     public abstract Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor);
 
