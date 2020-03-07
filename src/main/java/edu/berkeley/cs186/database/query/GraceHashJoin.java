@@ -202,9 +202,13 @@ public class GraceHashJoin {
             // You may find the ArrayList.addAll method useful here.
             // It may be helpful to read through the HashPartition.java class for methods that will be useful here
             if ((partition.getNumLeftPages() > this.numBuffers - 2) && (partition.getNumRightPages() > this.numBuffers - 2)){
-                joinedRecords.addAll(run(partition.getLeftIterator(), partition.getRightIterator(), pass++));
+                int temp = pass + 1;
+                joinedRecords.addAll(run(partition.getLeftIterator(), partition.getRightIterator(), temp));
             }
-            joinedRecords.addAll(buildAndProbe(partition));
+            else{
+                joinedRecords.addAll(buildAndProbe(partition));
+            }
+
         }
         return joinedRecords;
     }
