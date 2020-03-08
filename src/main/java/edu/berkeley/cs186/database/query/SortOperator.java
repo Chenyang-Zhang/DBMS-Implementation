@@ -107,6 +107,7 @@ public class SortOperator {
                 if (!itr.hasNext())
                     continue;
                 pQueue.offer(new Pair(itr.next(), i%len));
+                i++;
             }
             if (pQueue.isEmpty()){
                 break;

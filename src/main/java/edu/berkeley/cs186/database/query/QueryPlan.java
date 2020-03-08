@@ -334,6 +334,7 @@ public class QueryPlan {
         // TODO(proj3_part2): implement
 
         // 1. Find the cost of a sequential scan of the table
+        minOp = new SequentialScanOperator(this.transaction, table);
 
         // 2. For each eligible index column, find the cost of an index scan of the
         // table and retain the lowest cost operator
