@@ -335,18 +335,38 @@ public class QueryPlan {
 
         // 1. Find the cost of a sequential scan of the table
         QueryOperator seqOp = new SequentialScanOperator(this.transaction, table);
-        int seq_cost = minOp.estimateIOCost();
+        int seq_cost = seqOp.getIOCost();
 
         // 2. For each eligible index column, find the cost of an index scan of the
         // table and retain the lowest cost operator
         List<Integer> indexs = getEligibleIndexColumns(table);
         QueryOperator indexOp = null;
-        for (Integer index: indexs){
-            indexOp = new IndexScanOperator(this.transaction, table, index, );
+        QueryOperator tempOp = null;
+        Map<QueryOperator, Integer> Optable = new HashMap<>();
+        int cost = 999999;
+        for (Integer i: indexs){
+            tempOp = new IndexScanOperator(this.transaction, table, this.selectColumnNames.get(i), this.selectOperators.get(i), this.selectDataBoxes.get(i));
+            if (tempOp.getIOCost() < cost){
+                indexOp = tempOp;
+                Optable.put(indexOp, i);
+            }
+        }
+        if (indexOp != null){
+            int index_cost = indexOp.getIOCost();
+            minOp = seq_cost > index_cost? indexOp: seqOp;
+        }
+        else{
+            minOp = seqOp;
         }
 
         // 3. Push down SELECT predicates that apply to this table and that were not
         // used for an index scan
+        if (minOp instanceof SequentialScanOperator){
+            minOp = addEligibleSelections(minOp, -1);
+        }
+        else if (minOp instanceof IndexScanOperator){
+            minOp = addEligibleSelections(minOp, Optable.get(minOp));
+        }
 
         return minOp;
     }
