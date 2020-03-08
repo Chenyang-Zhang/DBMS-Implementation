@@ -99,6 +99,9 @@ class BNLJOperator extends JoinOperator {
             }
             else{
                 this.leftRecordIterator = BNLJOperator.this.getBlockIterator(this.getLeftTableName(), this.leftIterator, BNLJOperator.this.numBuffers-2);
+                while (!this.leftRecordIterator.hasNext()){
+                    this.leftRecordIterator = BNLJOperator.this.getBlockIterator(this.getLeftTableName(), this.leftIterator, BNLJOperator.this.numBuffers-2);
+                }
                 this.leftRecordIterator.markNext(); //mark the begin of a block
                 this.leftRecord = this.leftRecordIterator.next();
             }
@@ -154,6 +157,9 @@ class BNLJOperator extends JoinOperator {
                         nextLeftRecord();
                         //reset right record iterator to begin of the page for the new left record
                         resetRightRecordIterator();
+                    }
+                    else if (!this.leftIterator.hasNext() && !this.rightIterator.hasNext()){
+                        break;
                     }
                     else{
                         if (rightIterator.hasNext()){
