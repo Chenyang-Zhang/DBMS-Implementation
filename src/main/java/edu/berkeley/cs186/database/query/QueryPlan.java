@@ -231,6 +231,11 @@ public class QueryPlan {
         // Pass 1: Iterate through all single tables. For each single table, find
         // the lowest cost QueryOperator to access that table. Construct a mapping
         // of each table name to its lowest cost operator.
+        Map<String, Integer> map = new HashMap<>();
+        map.put(this.startTableName, this.minCostSingleAccess(this.startTableName).getIOCost());
+        for (String name: this.joinTableNames){
+            map.put(name, this.minCostSingleAccess(name).getIOCost());
+        }
 
         // Pass i: On each pass, use the results from the previous pass to find the
         // lowest cost joins with each single table. Repeat until all tables have
@@ -364,7 +369,7 @@ public class QueryPlan {
         if (minOp instanceof SequentialScanOperator){
             minOp = addEligibleSelections(minOp, -1);
         }
-        else if (minOp instanceof IndexScanOperator){
+        else{
             minOp = addEligibleSelections(minOp, Optable.get(minOp));
         }
 
