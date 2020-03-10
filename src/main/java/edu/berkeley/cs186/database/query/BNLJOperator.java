@@ -74,6 +74,10 @@ class BNLJOperator extends JoinOperator {
             this.rightIterator = BNLJOperator.this.getPageIterator(this.getRightTableName());
             this.rightIterator.markNext();
             fetchNextRightPage();
+            if (this.rightRecord == null){
+                this.nextRecord = null;
+                return;
+            }
 
             try {
                 this.fetchNextRecord();

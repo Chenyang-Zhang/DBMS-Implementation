@@ -174,6 +174,7 @@ public class TestJoinOperator {
         }
     }
 
+
     @Test
     @Category(PublicTests.class)
     public void testSimpleJoinBNLJ() {

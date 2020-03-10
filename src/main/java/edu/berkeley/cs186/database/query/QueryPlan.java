@@ -231,15 +231,19 @@ public class QueryPlan {
         // Pass 1: Iterate through all single tables. For each single table, find
         // the lowest cost QueryOperator to access that table. Construct a mapping
         // of each table name to its lowest cost operator.
-        Map<String, Integer> map = new HashMap<>();
-        map.put(this.startTableName, this.minCostSingleAccess(this.startTableName).getIOCost());
+        Map<String, QueryOperator> pass1map = new HashMap<>();
+        pass1map.put(this.startTableName, this.minCostSingleAccess(this.startTableName));
         for (String name: this.joinTableNames){
-            map.put(name, this.minCostSingleAccess(name).getIOCost());
+            pass1map.put(name, this.minCostSingleAccess(name));
         }
 
         // Pass i: On each pass, use the results from the previous pass to find the
         // lowest cost joins with each single table. Repeat until all tables have
         // been joined.
+        Map<Set, QueryOperator> prevMap = new HashMap<>();
+        while (true){
+            break;
+        }
 
         // Get the lowest cost operator from the last pass, add GROUP BY and SELECT
         // operators, and return an iterator on the final operator
@@ -348,7 +352,7 @@ public class QueryPlan {
         QueryOperator indexOp = null;
         QueryOperator tempOp = null;
         Map<QueryOperator, Integer> Optable = new HashMap<>();
-        int cost = 999999;
+        int cost = 9999999;
         for (Integer i: indexs){
             tempOp = new IndexScanOperator(this.transaction, table, this.selectColumnNames.get(i), this.selectOperators.get(i), this.selectDataBoxes.get(i));
             if (tempOp.getIOCost() < cost){
@@ -425,6 +429,7 @@ public class QueryPlan {
 
         //Input: prevMap (maps a set of tables to a query operator--the operator that joins the set)
         //Input: pass1Map (each set is a singleton with one table and single table access query operator)
+
 
         //FOR EACH set of tables in prevMap:
 
