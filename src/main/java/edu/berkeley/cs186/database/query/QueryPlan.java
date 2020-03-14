@@ -248,11 +248,11 @@ public class QueryPlan {
         // Get the lowest cost operator from the last pass, add GROUP BY and SELECT
         // operators, and return an iterator on the final operator
 
-        //this.addGroupBy();
-        //this.addProjects();
+        this.addGroupBy();
+        this.addProjects();
 
-        //return this.finalOperator.execute();
-        return this.executeNaive(); // TODO(proj3_part2): Replace this!!! Allows you to test intermediate functionality
+        return this.finalOperator.execute();
+        //return this.executeNaive(); // TODO(proj3_part2): Replace this!!! Allows you to test intermediate functionality
     }
 
     /**
@@ -441,22 +441,47 @@ public class QueryPlan {
                 //get the left side and the right side (table name and column)
                 String [] left_side = getJoinLeftColumnNameByIndex(i);
                 String [] right_side = getJoinRightColumnNameByIndex(i);
+                Set temp_set = new HashSet();
+                temp_set.addAll(s);
                 //Case 1. Set contains left table but not right, use pass1Map to
                 //fetch the right operator to access the rightTable
                 if (s.contains(left_side[0]) && !s.contains(right_side[0])){
-                    QueryOperator scan_op = pass1Map.get(right_side[0]);
+                    Set right = new HashSet();
+                    right.add(right_side[0]);
+                    QueryOperator scan_op = pass1Map.get(right);
                     QueryOperator op = minCostJoinType(prevMap.get(s), scan_op, left_side[1], right_side[1]);
-                    s.add(right_side[0]);
-                    map.put(s, op);
+                    temp_set.add(right_side[0]);
+                    if (map.containsKey(temp_set)){
+                        QueryOperator min_op = null;
+                        min_op = map.get(temp_set).getIOCost() > op.getIOCost()? op: map.get(temp_set);
+                        map.put(temp_set, min_op);
+                    }
+                    else{
+                        map.put(temp_set, op);
+                    }
                 }
                 //Case 2. Set contains right table but not left, use pass1Map to
                 // fetch the right operator to access the leftTable.
                 else if (s.contains(right_side[0]) && !s.contains(left_side[0])){
-                    QueryOperator scan_op = pass1Map.get(left_side[0]);
+                    Set left = new HashSet();
+                    left.add(left_side[0]);
+                    QueryOperator scan_op = pass1Map.get(left);
                     QueryOperator op = minCostJoinType(prevMap.get(s), scan_op, right_side[1], left_side[1]);
-                    s.add(left_side[0]);
-                    map.put(s, op);
+                    temp_set.add(left_side[0]);
+                    if (map.containsKey(temp_set)){
+                        QueryOperator min_op = null;
+                        min_op = map.get(temp_set).getIOCost() > op.getIOCost()? op: map.get(temp_set);
+                        map.put(temp_set, min_op);
+                    }
+                    else{
+                        map.put(temp_set, op);
+                    }
                 }
+                //Case 3. Set contains neither or both the left table or right table (continue loop)
+                else{
+                    continue;
+                }
+
             }
 
         }
@@ -476,6 +501,8 @@ public class QueryPlan {
 
         return map;
     }
+
+
 
     /**
      * Finds the lowest cost QueryOperator in the given mapping. A mapping is
