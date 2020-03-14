@@ -248,6 +248,10 @@ public class QueryPlan {
         // Get the lowest cost operator from the last pass, add GROUP BY and SELECT
         // operators, and return an iterator on the final operator
 
+        //this.addGroupBy();
+        //this.addProjects();
+
+        //return this.finalOperator.execute();
         return this.executeNaive(); // TODO(proj3_part2): Replace this!!! Allows you to test intermediate functionality
     }
 
@@ -430,12 +434,16 @@ public class QueryPlan {
         //Input: prevMap (maps a set of tables to a query operator--the operator that joins the set)
         //Input: pass1Map (each set is a singleton with one table and single table access query operator)
 
-
         //FOR EACH set of tables in prevMap:
+        for (Set s: prevMap.keySet()){
+            //FOR EACH join condition listed in the query
+            for (int i = 0; i < this.joinTableNames.size(); ++i){
+                //get the left side and the right side (table name and column)
+                String [] left_side = getJoinLeftColumnNameByIndex(i);
+                String [] right_side = getJoinRightColumnNameByIndex(i);
+            }
 
-        //FOR EACH join condition listed in the query
-
-        //get the left side and the right side (table name and column)
+        }
 
         /*
          * Case 1. Set contains left table but not right, use pass1Map to
