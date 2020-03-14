@@ -236,7 +236,7 @@ public class QueryPlan {
         temp.add(this.startTableName);
         pass1map.put(temp, this.minCostSingleAccess(this.startTableName));
         for (String name: this.joinTableNames){
-            temp.clear();
+            temp = new HashSet<>();
             temp.add(name);
             pass1map.put(temp, this.minCostSingleAccess(name));
         }
@@ -364,7 +364,7 @@ public class QueryPlan {
         QueryOperator indexOp = null;
         QueryOperator tempOp = null;
         Map<QueryOperator, Integer> Optable = new HashMap<>();
-        int cost = 9999999;
+        int cost = Integer.MAX_VALUE;
         for (Integer i: indexs){
             tempOp = new IndexScanOperator(this.transaction, table, this.selectColumnNames.get(i), this.selectOperators.get(i), this.selectDataBoxes.get(i));
             if (tempOp.getIOCost() < cost){
