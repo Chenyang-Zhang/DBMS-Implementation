@@ -441,6 +441,22 @@ public class QueryPlan {
                 //get the left side and the right side (table name and column)
                 String [] left_side = getJoinLeftColumnNameByIndex(i);
                 String [] right_side = getJoinRightColumnNameByIndex(i);
+                //Case 1. Set contains left table but not right, use pass1Map to
+                //fetch the right operator to access the rightTable
+                if (s.contains(left_side[0]) && !s.contains(right_side[0])){
+                    QueryOperator scan_op = pass1Map.get(right_side[0]);
+                    QueryOperator op = minCostJoinType(prevMap.get(s), scan_op, left_side[1], right_side[1]);
+                    s.add(right_side[0]);
+                    map.put(s, op);
+                }
+                //Case 2. Set contains right table but not left, use pass1Map to
+                // fetch the right operator to access the leftTable.
+                else if (s.contains(right_side[0]) && !s.contains(left_side[0])){
+                    QueryOperator scan_op = pass1Map.get(left_side[0]);
+                    QueryOperator op = minCostJoinType(prevMap.get(s), scan_op, right_side[1], left_side[1]);
+                    s.add(left_side[0]);
+                    map.put(s, op);
+                }
             }
 
         }

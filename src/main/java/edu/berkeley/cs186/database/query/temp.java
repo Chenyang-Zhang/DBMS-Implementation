@@ -37,4 +37,18 @@ public class temp {
             index++;
         }
     }
+
+    /**
+     * Given a join condition between an outer relation represented by leftOp
+     * and an inner relation represented by rightOp, find the lowest cost join
+     * operator out of all the possible join types in JoinOperator.JoinType.
+     *
+     * @return lowest cost join QueryOperator between the input operators
+     */
+    private QueryOperator minCostJoinType(QueryOperator leftOp,
+                                          QueryOperator rightOp,
+                                          String leftColumn,
+                                          String rightColumn) {
+
+    }
 }
