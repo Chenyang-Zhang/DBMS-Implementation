@@ -21,6 +21,21 @@ public enum LockType {
             throw new NullPointerException("null lock type");
         }
         // TODO(proj4_part1): implement
+        if (a == NL || b == NL){
+            return true;
+        }
+        if (a == X || b == X){
+            return false;
+        }
+        if (a == IS || b == IS){
+            return true;
+        }
+        if (a == SIX || b ==SIX){
+            return false;
+        }
+        if (a == b){
+            return true;
+        }
 
         return false;
     }
