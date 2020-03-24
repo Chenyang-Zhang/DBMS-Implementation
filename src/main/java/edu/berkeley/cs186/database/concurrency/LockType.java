@@ -36,7 +36,6 @@ public enum LockType {
         if (a == b){
             return true;
         }
-
         return false;
     }
 
@@ -68,8 +67,36 @@ public enum LockType {
             throw new NullPointerException("null lock type");
         }
         // TODO(proj4_part1): implement
-
+        if (childLockType == NL){
+            return true;
+        }
+        else if (childLockType == IS){
+            if (parentLockType == IS || parentLockType ==IX){
+                return true;
+            }
+        }
+        else if (childLockType == IX){
+            if (parentLockType == IX || parentLockType == SIX){
+                return true;
+            }
+        }
+        else if(childLockType == S){
+            if (parentLockType == IS ||parentLockType == IX){
+                return true;
+            }
+        }
+        else if (childLockType == SIX){
+            if (parentLockType == IX){
+                return true;
+            }
+        }
+        else{
+            if (parentLockType == IX || parentLockType == SIX){
+                return true;
+            }
+        }
         return false;
+
     }
 
     /**
