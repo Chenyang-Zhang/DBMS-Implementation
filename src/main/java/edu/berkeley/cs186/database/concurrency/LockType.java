@@ -110,8 +110,38 @@ public enum LockType {
             throw new NullPointerException("null lock type");
         }
         // TODO(proj4_part1): implement
+        if (substitute == required){
+            return true;
+        }
+        else if (substitute == NL){
+            return false;
+        }
+        else if (required == NL){
+            return true;
+        }
+        else if (substitute == IS){
+            return false;
+        }
+        else if (substitute == X){
+            return true;
+        }
+        else if (required == SIX || required == X){
+            return false;
+        }
+        else if (required == IX){
+            return false;
+        }
+        else if (required == IS){
+            if (substitute == IX || substitute == S){
+                return true;
+            }
+            return false;
+        }
+        else if (substitute == IX){
+            return false;
+        }
 
-        return false;
+        return true;
     }
 
     @Override
