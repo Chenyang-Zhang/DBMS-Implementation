@@ -33,10 +33,7 @@ public enum LockType {
         if (a == SIX || b ==SIX){
             return false;
         }
-        if (a == b){
-            return true;
-        }
-        return false;
+        return a == b;
     }
 
     /**
@@ -140,7 +137,6 @@ public enum LockType {
         else if (substitute == IX){
             return false;
         }
-
         return true;
     }
 
