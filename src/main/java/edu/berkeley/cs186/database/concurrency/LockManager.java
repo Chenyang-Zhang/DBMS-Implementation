@@ -233,6 +233,7 @@ public class LockManager {
                     if (l.name == n){
                         flag = true;
                         release_Locks.add(l);
+                        break;
                     }
                 }
                 if (!flag){
@@ -320,6 +321,7 @@ public class LockManager {
                 if (lock.transactionNum == transaction.getTransNum()&& lock.lockType != LockType.NL){
                     sign = true;
                     releaseLock = lock;
+                    break;
                 }
             }
             if (!sign){
@@ -370,6 +372,7 @@ public class LockManager {
                     }
                     flag = true;
                     originLock = lock;
+                    break;
                 }
             }
             if (!flag){
