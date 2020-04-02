@@ -143,11 +143,11 @@ public class TestLockType {
      * ----+-----+-----+-----+-----+-----+-----
      * IX  |  T  |  T  |  T  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * S   |  T  |  T  |  F  |  T  |  F  |  F
+     * S   |  T  |  F  |  F  |  T  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
      * SIX |  T  |  F  |  F  |  T  |  T  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * X   |  T  |  T  |  T  |  T  |  T  |  T
+     * X   |  T  |  F  |  F  |  T  |  F  |  T
      * ----+-----+-----+-----+-----+-----+-----
      *
      * The filled in cells are covered by the public test.
@@ -180,6 +180,7 @@ public class TestLockType {
 
         // You can substitute X with X
         assertTrue(LockType.substitutable(LockType.X, LockType.X));
+
     }
 
 }

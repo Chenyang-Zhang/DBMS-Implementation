@@ -119,23 +119,23 @@ public enum LockType {
         else if (substitute == IS){
             return false;
         }
-        else if (substitute == X){
-            return true;
-        }
-        else if (required == SIX || required == X){
+        else if (substitute == S){
             return false;
         }
-        else if (required == IX){
+        else if (required == X || required == IX || required == SIX){
             return false;
         }
         else if (required == IS){
-            if (substitute == IX || substitute == S){
+            if (substitute == IX){
                 return true;
             }
             return false;
         }
-        else if (substitute == IX){
-            return false;
+        else if (required == S){
+            if (substitute == IX){
+                return false;
+            }
+            return true;
         }
         return true;
     }
