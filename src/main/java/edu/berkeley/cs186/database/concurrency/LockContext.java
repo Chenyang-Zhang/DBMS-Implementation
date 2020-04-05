@@ -216,7 +216,9 @@ public class LockContext {
                 lockman.release(transaction, n);
                 //update numChildLocks
                 LockContext release_context = fromResourceName(lockman, n);
-                release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
+                if(release_context.parentContext() != null){
+                    release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
+                }
             }
 
         }
@@ -263,18 +265,17 @@ public class LockContext {
 
         List<ResourceName> resourceNames = descendants(transaction);
         if(resourceNames.size() == 0){
+            resourceNames.add(name);
             if(getExplicitLockType(transaction) == LockType.IS){
-                lockman.release(transaction, name);
-                lockman.acquire(transaction, name, LockType.S);
+                lockman.acquireAndRelease(transaction, name, LockType.S, resourceNames);
                 return;
             }
             if(getExplicitLockType(transaction) == LockType.IX){
-                lockman.release(transaction, name);
-                lockman.acquire(transaction, name, LockType.X);
-                return;
+                lockman.acquireAndRelease(transaction, name, LockType.X, resourceNames);
             }
             return;
         }
+        resourceNames.add(name);
         Set<LockType> set = new HashSet<>();
         for(ResourceName n: resourceNames){
             List<Lock> locks = lockman.getLocks(n);
@@ -287,13 +288,14 @@ public class LockContext {
             lockman.acquireAndRelease(transaction, name, LockType.X, resourceNames);
         }
         else{
-            lockman.release(transaction, name);
             lockman.acquireAndRelease(transaction, name, LockType.S, resourceNames);
         }
         //update numChildLocks
         for(ResourceName n: resourceNames){
             LockContext release_context = fromResourceName(lockman, n);
-            release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
+            if(release_context.parentContext() != null){
+                release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
+            }
         }
         return;
     }

@@ -22,6 +22,10 @@ public class LockUtil {
         // TODO(proj4_part2): implement
 
         TransactionContext transaction = TransactionContext.getTransaction(); // current transaction
+        if(transaction == null){
+            //do nothing
+            return;
+        }
 
         return;
     }
