@@ -1,4 +1,4 @@
-# Project 4: Locking (Part 2)
+### Project 4: Locking (Part 2)
 
 **A working implementation of Part 1 is required for Part 2. If you have not yet finished
 [Part 1](proj4-part1-README.md), you should do so before continuing.**
