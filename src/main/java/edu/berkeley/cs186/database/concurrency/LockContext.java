@@ -205,6 +205,7 @@ public class LockContext {
         }
         List <ResourceName> resourceNames = sisDescendants(transaction);
         if(newLockType == LockType.SIX && (curr_LockType == LockType.IS || curr_LockType == LockType.IX || curr_LockType == LockType.S)){
+            resourceNames.add(name);
             lockman.acquireAndRelease(transaction, name, newLockType, resourceNames);
             for(ResourceName n: resourceNames){
                 //update numChildLocks
@@ -215,6 +216,7 @@ public class LockContext {
             }
             return;
         }
+
         List<ResourceName> self = new ArrayList<>();
         self.add(name);
         if(curr_LockType == LockType.IS && newLockType == LockType.S){
@@ -318,7 +320,7 @@ public class LockContext {
      * @param transaction the given transaction
      * @return a list of ResourceNames of descendants which the transaction holds any lock
      */
-    private List<ResourceName> descendants(TransactionContext transaction) {
+    public List<ResourceName> descendants(TransactionContext transaction) {
         List<ResourceName> resourceNames = new ArrayList<>();
         for(Lock l: lockman.getLocks(transaction)){
             if(l.name.isDescendantOf(name)){
@@ -329,6 +331,23 @@ public class LockContext {
         }
         return resourceNames;
     }
+
+    /**
+     *special case for escalating: already has IX lock and want S lock. Acquire SIX lock and release S/IS lock on descendants
+     * @param transaction
+     */
+    public void specialEscalate(TransactionContext transaction){
+        List<ResourceName> resourceNames = sisDescendants(transaction);
+        resourceNames.add(name);
+        lockman.acquireAndRelease(transaction, name, LockType.SIX, resourceNames);
+        for(ResourceName n: resourceNames){
+            LockContext release_context = fromResourceName(lockman, n);
+            if(release_context.parentContext() != null){
+                release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
+            }
+        }
+    }
+
     /**
      * Gets the type of lock that the transaction has at this level, either implicitly
      * (e.g. explicit S lock at higher level implies S lock at this level) or explicitly.
