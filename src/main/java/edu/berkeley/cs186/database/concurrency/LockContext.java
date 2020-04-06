@@ -155,12 +155,6 @@ public class LockContext {
         if(saturation(transaction) > 0){
             throw new InvalidLockException("Lock release is invalid!");
         }
-        /*
-        LockContext child_Context = childContext(name.getCurrentName().getSecond());
-        if(!LockType.canBeParentLock(LockType.NL, child_Context.getExplicitLockType(transaction))){
-            throw new InvalidLockException("Lock release is invalid!");
-        }
-        */
 
         //If no exception happens, release the lock via lock manager
         lockman.release(transaction, name);
@@ -206,24 +200,34 @@ public class LockContext {
         }
         //InvalidLockException
         //special case for SIX
-        if(hasSIXAncestor(transaction)){
+        if(newLockType == LockType.SIX && hasSIXAncestor(transaction)){
             throw new InvalidLockException("Already has SIX lock on an ancestor!");
         }
         List <ResourceName> resourceNames = sisDescendants(transaction);
         if(newLockType == LockType.SIX && (curr_LockType == LockType.IS || curr_LockType == LockType.IX || curr_LockType == LockType.S)){
-            lockman.promote(transaction, name, newLockType);
+            lockman.acquireAndRelease(transaction, name, newLockType, resourceNames);
             for(ResourceName n: resourceNames){
-                lockman.release(transaction, n);
                 //update numChildLocks
                 LockContext release_context = fromResourceName(lockman, n);
                 if(release_context.parentContext() != null){
                     release_context.update_numChildLocks(release_context.parentContext(), transaction.getTransNum(), -1);
                 }
             }
-
+            return;
         }
+        List<ResourceName> self = new ArrayList<>();
+        self.add(name);
+        if(curr_LockType == LockType.IS && newLockType == LockType.S){
+            lockman.acquireAndRelease(transaction, name, newLockType, self);
+            return;
+        }
+        if(curr_LockType == LockType.IX && newLockType == LockType.X){
+            lockman.acquireAndRelease(transaction, name, newLockType, self);
+            return;
+        }
+
         //case that not a promotion
-        if(!LockType.substitutable(newLockType, getExplicitLockType(transaction))){
+        if(!LockType.substitutable(newLockType, curr_LockType)){
             throw new InvalidLockException("Not a promotion");
         }
         //if no exception happens, guarantee the promotion
@@ -336,22 +340,27 @@ public class LockContext {
         }
         // TODO(proj4_part2): implement
         LockType explicit_LockType = getExplicitLockType(transaction);
-        if (explicit_LockType != LockType.NL){
-            return explicit_LockType;
-        }
-        LockType implicit_LockType = null;
+
+        LockType implicit_LockType = LockType.NL;
         LockContext parent_Context = parentContext();
         while(parent_Context != null){
             implicit_LockType = parent_Context.getExplicitLockType(transaction);
             if (implicit_LockType == LockType.S || implicit_LockType == LockType.SIX){
-                return LockType.S;
+                implicit_LockType = LockType.S;
+                break;
             }
             if (implicit_LockType == LockType.X){
-                return LockType.X;
+                break;
             }
             parent_Context = parent_Context.parentContext();
         }
-        return LockType.NL;
+        if(explicit_LockType == LockType.NL && (implicit_LockType == LockType.S || implicit_LockType == LockType.X)){
+            return implicit_LockType;
+        }
+        if(explicit_LockType == LockType.IX && implicit_LockType == LockType.S){
+            return LockType.SIX;
+        }
+        return explicit_LockType;
     }
 
     /**
