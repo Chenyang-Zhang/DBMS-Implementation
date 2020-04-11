@@ -146,5 +146,20 @@ public class TestLockUtil {
         assertEquals(Collections.emptyList(), lockManager.log);
     }
 
+    @Test
+    @Category(PublicTests.class)
+    public void mytest1() {
+        //LockUtil.ensureSufficientLockHeld(pageContexts[1], LockType.S);
+        lockManager.startLog();
+        //LockUtil.ensureSufficientLockHeld(tableContext, LockType.S);
+        LockUtil.ensureSufficientLockHeld(pageContexts[1], LockType.S);
+        LockUtil.ensureSufficientLockHeld(tableContext, LockType.X);
+        assertEquals(Arrays.asList(
+                "acquire-and-release 0 database IX",
+                "acquire-and-release 0 database/table1 IX",
+                "acquire 0 database/table1/2 X"
+        ), lockManager.log);
+    }
+
 }
 

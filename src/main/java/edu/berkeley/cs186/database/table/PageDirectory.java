@@ -111,6 +111,7 @@ public class PageDirectory implements HeapFile {
     @Override
     public Page getPageWithSpace(short requiredSpace) {
         // TODO(proj4_part3): modify for smarter locking
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
 
         if (requiredSpace <= 0) {
             throw new IllegalArgumentException("cannot request nonpositive amount of space");

@@ -32,15 +32,13 @@ public class LockUtil {
         List<LockType> lockTypes = new ArrayList<>();
         if(lockType == LockType.S){
             lockTypes.add(LockType.IS);
+            lockTypes.add(LockType.IX);
             Deque<LockContext> contextStack = getParentContext(lockContext, transaction, lockTypes);
             while(!contextStack.isEmpty()){ //ensure parent's has required locks
                 LockContext context = contextStack.removeFirst();
                 LockType contextLockType = context.getEffectiveLockType(transaction);
                 if(contextLockType == LockType.NL){
                     context.acquire(transaction, LockType.IS);
-                }
-                else if(contextLockType == LockType.IX){
-                    continue;
                 }
             }
 
@@ -65,7 +63,8 @@ public class LockUtil {
             }
 
         }
-        else{
+        else{ //LockType.X
+            //ancestor should have IX or SIX lock
             lockTypes.add(LockType.IX);
             lockTypes.add(LockType.SIX);
             Deque<LockContext> contextStack = getParentContext(lockContext, transaction, lockTypes);
@@ -81,30 +80,23 @@ public class LockUtil {
                 else{
                     context.promote(transaction, LockType.SIX);
                 }
-
             }
-            if(curr_LockType == LockType.NL){
+
+            if(lockContext.getExplicitLockType(transaction) == LockType.NL){
+                //if no lock is currently held, use acquire method
                 lockContext.acquire(transaction, LockType.X);
             }
             else{
-                if(lockContext.descendants(transaction).size() == 0){
-                    lockContext.promote(transaction, lockType);
-                }
-                else if(curr_LockType == LockType.IX){
-                    lockContext.escalate(transaction);
-                }
-                else{
-                    System.out.println("h");
+                lockContext.escalate(transaction);
+                if(lockContext.getEffectiveLockType(transaction) != lockType){
+                    lockContext.promote(transaction, LockType.X);
                 }
             }
-
         }
         return;
     }
 
     // TODO(proj4_part2): add helper methods as you see fit
-
-
     private static Deque<LockContext> getParentContext(LockContext lockContext, TransactionContext transaction, List<LockType> lockTypes) {
         Deque<LockContext> contextStack = new LinkedList<>();
         LockContext parent = lockContext.parentContext();
