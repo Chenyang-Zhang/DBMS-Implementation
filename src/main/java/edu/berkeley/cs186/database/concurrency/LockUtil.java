@@ -90,13 +90,12 @@ public class LockUtil {
                 if(lockContext.descendants(transaction).size() == 0){
                     lockContext.promote(transaction, lockType);
                 }
-                /*
-                try{
-                    lockContext.promote(transaction, lockType);
-                } catch(InvalidLockException e){
+                else if(curr_LockType == LockType.IX){
                     lockContext.escalate(transaction);
-                    lockContext.promote(transaction, lockType);
-                }*/
+                }
+                else{
+                    System.out.println("h");
+                }
             }
 
         }

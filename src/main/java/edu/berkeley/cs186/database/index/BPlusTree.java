@@ -139,9 +139,9 @@ public class BPlusTree {
     public Optional<RecordId> get(DataBox key) {
         typecheck(key);
         // TODO(proj2): implement
-        // TODO(proj4_part3): B+ tree locking
         LeafNode leaf = root.get(key); //get leafNode contains key
         return leaf.getKey(key);  //get rid from leaf node
+        // TODO(proj4_part3): B+ tree locking
 
     }
 
