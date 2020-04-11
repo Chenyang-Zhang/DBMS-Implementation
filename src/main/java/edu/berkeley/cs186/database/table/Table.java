@@ -119,6 +119,7 @@ public class Table implements BacktrackingIterable<Record> {
      */
     public Table(String name, Schema schema, HeapFile heapFile, LockContext lockContext) {
         // TODO(proj4_part3): table locking code
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         this.name = name;
         this.heapFile = heapFile;
@@ -453,6 +454,7 @@ public class Table implements BacktrackingIterable<Record> {
     // Iterators /////////////////////////////////////////////////////////////////
     public BacktrackingIterator<RecordId> ridIterator() {
         // TODO(proj4_part3): reduce locking overhead for table scans
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         BacktrackingIterator<Page> iter = heapFile.iterator();
         return new ConcatBacktrackingIterator<>(new PageIterator(iter, false));

@@ -850,6 +850,7 @@ public class Database implements AutoCloseable {
         public Iterator<Record> sortedScan(String tableName, String columnName) {
             // TODO(proj4_part3): scan locking
 
+            LockUtil.ensureSufficientLockHeld(getTableContext(tableName), LockType.S);
             Table tab = getTable(tableName);
             try {
                 Pair<String, BPlusTree> index = resolveIndexFromName(tableName, columnName);
@@ -871,6 +872,7 @@ public class Database implements AutoCloseable {
 
             Table tab = getTable(tableName);
             Pair<String, BPlusTree> index = resolveIndexFromName(tableName, columnName);
+            LockUtil.ensureSufficientLockHeld(getTableContext(tableName), LockType.S);
             return new RecordIterator(tab, index.getSecond().scanGreaterEqual(startValue));
         }
 

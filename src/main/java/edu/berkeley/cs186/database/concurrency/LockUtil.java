@@ -29,6 +29,11 @@ public class LockUtil {
             //do nothing
             return;
         }
+
+        if(lockContext.readonly){
+            return;
+        }
+
         List<LockType> lockTypes = new ArrayList<>();
         if(lockType == LockType.S){
             lockTypes.add(LockType.IS);
