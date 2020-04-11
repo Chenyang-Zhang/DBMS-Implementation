@@ -1055,6 +1055,14 @@ public class Database implements AutoCloseable {
         @Override
         public void close() {
             // TODO(proj4_part3): release locks held by the transaction
+            //get all locks the transaction currently held
+            List<Lock> locks = lockManager.getLocks(this);
+            //have to reverse the list since after release, the node should not have lock on its descendants
+            Collections.reverse(locks);
+            for(Lock l: locks){
+                LockContext lockContext = LockContext.fromResourceName(lockManager, l.name);
+                lockContext.release(this);
+            }
             return;
         }
 
