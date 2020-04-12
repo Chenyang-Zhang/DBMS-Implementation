@@ -149,6 +149,7 @@ public class Table implements BacktrackingIterable<Record> {
         }
 
         this.lockContext = lockContext;
+        enableAutoEscalate();
     }
 
     // Accessors /////////////////////////////////////////////////////////////////
@@ -441,6 +442,7 @@ public class Table implements BacktrackingIterable<Record> {
      */
     public void enableAutoEscalate() {
         // TODO(proj4_part3): implement
+        this.lockContext.autoEscalte = true;
     }
 
     /**
@@ -449,6 +451,7 @@ public class Table implements BacktrackingIterable<Record> {
      */
     public void disableAutoEscalate() {
         // TODO(proj4_part3): implement
+        this.lockContext.autoEscalte = false;
     }
 
     // Iterators /////////////////////////////////////////////////////////////////

@@ -90,6 +90,7 @@ public class PageDirectory implements HeapFile {
         this.partNum = partNum;
         this.emptyPageMetadataSize = emptyPageMetadataSize;
         this.lockContext = lockContext;
+        this.lockContext.capacity(getNumDataPages());
         this.firstHeader = new HeaderPage(pageNum, 0, true);
     }
 
@@ -358,6 +359,8 @@ public class PageDirectory implements HeapFile {
                     page.getBuffer().putInt(pageDirectoryId).putInt(headerOffset).putShort(unusedSlot);
 
                     ++this.numDataPages;
+                    //update capacity
+                    lockContext.capacity(getNumDataPages());
 
                     return page;
                 }

@@ -29,9 +29,18 @@ public class LockUtil {
             //do nothing
             return;
         }
-
         if(lockContext.readonly){
             return;
+        }
+        LockContext parent = lockContext.parent;
+        if(parent != null && parent.autoEscalte){
+            //do autoEsacalte
+            if(parent.saturation(transaction) >= 0.2 && parent.capacity >= 10){
+                parent.escalate(transaction);
+                if(LockType.substitutable(lockContext.getEffectiveLockType(transaction), lockType)){
+                    return;
+                }
+            }
         }
 
         List<LockType> lockTypes = new ArrayList<>();
