@@ -89,6 +89,7 @@ public class BPlusTree {
      */
     public BPlusTree(BufferManager bufferManager, BPlusTreeMetadata metadata, LockContext lockContext) {
         // TODO(proj4_part3): B+ tree locking
+        lockContext.disableChildLocks();
 
         // Sanity checks.
         if (metadata.getOrder() < 0) {
@@ -139,6 +140,8 @@ public class BPlusTree {
     public Optional<RecordId> get(DataBox key) {
         typecheck(key);
         // TODO(proj2): implement
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
+
         LeafNode leaf = root.get(key); //get leafNode contains key
         return leaf.getKey(key);  //get rid from leaf node
         // TODO(proj4_part3): B+ tree locking
@@ -155,6 +158,7 @@ public class BPlusTree {
     public Iterator<RecordId> scanEqual(DataBox key) {
         typecheck(key);
         // TODO(proj4_part3): B+ tree locking
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         Optional<RecordId> rid = get(key);
         if (rid.isPresent()) {
@@ -193,6 +197,8 @@ public class BPlusTree {
      */
     public Iterator<RecordId> scanAll() {
         // TODO(proj2): Return a BPlusTreeIterator.
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
+
         BPlusTreeIterator itr = new BPlusTreeIterator(); //generate iterator
         if (itr.hasNext()) // if itr has next, return it
             return itr;
@@ -227,6 +233,8 @@ public class BPlusTree {
     public Iterator<RecordId> scanGreaterEqual(DataBox key) {
         typecheck(key);
         // TODO(proj2): Return a BPlusTreeIterator.
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
+
         BPlusTreeIterator itr = new BPlusTreeIterator(key); //generate iterator
         if (itr.hasNext()) // if itr has next, return it
             return itr;
@@ -247,6 +255,8 @@ public class BPlusTree {
     public void put(DataBox key, RecordId rid) {
         typecheck(key);
         // TODO(proj2): implement
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
+
         Optional<Pair<DataBox, Long>> pair = root.put(key, rid);
         if (pair.isPresent()){ //this means root overflow, need to construct new root
             DataBox new_key = pair.get().getFirst();
@@ -284,6 +294,8 @@ public class BPlusTree {
      */
     public void bulkLoad(Iterator<Pair<DataBox, RecordId>> data, float fillFactor) {
         // TODO(proj2): implement
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
+
         if (!(root instanceof LeafNode) || ((LeafNode) root).scanAll().hasNext()){
             //for an empty tree, root must be a leafNode and don't have any keys or rids
             throw new BPlusTreeException("Tree is not Empty!");
@@ -324,6 +336,8 @@ public class BPlusTree {
     public void remove(DataBox key) {
         typecheck(key);
         // TODO(proj2): implement
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
+
         root.remove(key);
         // TODO(proj4_part3): B+ tree locking
 
@@ -337,6 +351,8 @@ public class BPlusTree {
      */
     public String toSexp() {
         // TODO(proj4_part3): B+ tree locking
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
+
         return root.toSexp();
     }
 
@@ -354,6 +370,8 @@ public class BPlusTree {
      */
     public String toDot() {
         // TODO(proj4_part3): B+ tree locking
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
+
         List<String> strings = new ArrayList<>();
         strings.add("digraph g {" );
         strings.add("  node [shape=record, height=0.1];");
