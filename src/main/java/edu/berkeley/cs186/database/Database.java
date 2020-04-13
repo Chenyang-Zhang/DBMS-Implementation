@@ -1210,6 +1210,7 @@ public class Database implements AutoCloseable {
                 lockTableMetadata(prefixedTableName, LockType.X);
 
                 TableInfoRecord record = getTableMetadata(prefixedTableName);
+                LockUtil.ensureSufficientLockHeld(getTableContext(prefixedTableName, record.partNum), LockType.X);
                 if (record.isAllocated()) {
                     throw new DatabaseException("table " + prefixedTableName + " already exists");
                 }
@@ -1243,7 +1244,7 @@ public class Database implements AutoCloseable {
                 // TODO(proj4_part3): add locking
 
                 lockTableMetadata(prefixedTableName, LockType.X);
-                LockUtil.ensureSufficientLockHeld(getTableContext(tableName), LockType.X);
+                LockUtil.ensureSufficientLockHeld(getTableContext(prefixedTableName), LockType.X);
 
                 TableInfoRecord record = getTableMetadata(prefixedTableName);
                 if (!record.isAllocated()) {
@@ -1295,9 +1296,9 @@ public class Database implements AutoCloseable {
             try {
                 // TODO(proj4_part3): add locking
                 lockTableMetadata(prefixedTableName, LockType.X);
-                //LockUtil.ensureSufficientLockHeld(getTableContext(prefixedTableName), LockType.X);
 
                 TableInfoRecord tableMetadata = getTableMetadata(prefixedTableName);
+                LockUtil.ensureSufficientLockHeld(getTableContext(prefixedTableName, tableMetadata.partNum), LockType.X);
                 if (!tableMetadata.isAllocated()) {
                     throw new DatabaseException("table " + tableName + " does not exist");
                 }
