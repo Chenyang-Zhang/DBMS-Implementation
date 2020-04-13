@@ -193,11 +193,6 @@ class LeafNode extends BPlusNode {
         return Optional.of(new Pair<>(split_key, right_node_page_num));
     }
 
-    // See BPlusNode.bulkLoad.
-    @Override
-    public LeafNode getRightmostLeaf() {
-        return this; //leafNode just return itself
-    }
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {

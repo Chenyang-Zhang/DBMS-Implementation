@@ -132,15 +132,6 @@ class InnerNode extends BPlusNode {
         return Optional.empty(); //if not overflow, return empty
     }
 
-    // See BPlusNode.bulkLoad.
-    //helper method for implementing bulkload
-    @Override
-    public LeafNode getRightmostLeaf() {
-        assert(children.size() > 0);
-        //similar to get(), but index here is always keys.size()(correspond to the rightmostLeaf)
-        BPlusNode childNode = getChild(children.size()-1);
-        return childNode.getRightmostLeaf();
-    }
 
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
