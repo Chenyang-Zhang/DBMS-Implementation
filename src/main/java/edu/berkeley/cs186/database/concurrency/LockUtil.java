@@ -33,7 +33,7 @@ public class LockUtil {
             return;
         }
         LockContext parent = lockContext.parent;
-        if(parent != null && parent.autoEscalte){
+        if(parent != null && parent.autoEscalte  && parent.parent.parent == null){
             //do autoEsacalte
             if(parent.saturation(transaction) >= 0.2 && parent.capacity >= 10){
                 parent.escalate(transaction);
@@ -123,5 +123,38 @@ public class LockUtil {
         }
         return contextStack;
     }
+
+    public static void ensureIXLockHeld(LockContext lockContext) {
+        TransactionContext transaction = TransactionContext.getTransaction();
+        LockType curr_LockType = lockContext.getEffectiveLockType(transaction);
+        if (transaction == null || curr_LockType == LockType.IX || LockType.substitutable(curr_LockType, LockType.IX)) {
+            //do nothing
+            return;
+        }
+        if (lockContext.readonly) {
+            return;
+        }
+        if(curr_LockType == LockType.X){
+            return;
+        }
+
+        List<LockType> lockTypes = new ArrayList<>();
+        lockTypes.add(LockType.SIX);
+        lockTypes.add(LockType.IX);
+        Deque<LockContext> contextStack = getParentContext(lockContext, transaction, lockTypes);
+        while (!contextStack.isEmpty()) { //ensure parent's has required locks
+            LockContext context = contextStack.removeFirst();
+            LockType contextLockType = context.getEffectiveLockType(transaction);
+            if (contextLockType == LockType.NL) {
+                context.acquire(transaction, LockType.IX);
+            }
+            else if(curr_LockType == LockType.S){
+                context.promote(transaction, LockType.SIX);
+            }
+        }
+    }
+
+
+
 
 }

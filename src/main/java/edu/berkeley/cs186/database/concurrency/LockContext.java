@@ -42,7 +42,7 @@ public class LockContext {
     protected boolean childLocksDisabled;
 
     //boolean value for enable autoEscalte
-    public boolean autoEscalte;
+    public boolean autoEscalte = false;
 
     public LockContext(LockManager lockman, LockContext parent, Pair<String, Long> name) {
         this(lockman, parent, name, false);
