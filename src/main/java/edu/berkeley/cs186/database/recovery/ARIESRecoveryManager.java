@@ -520,10 +520,29 @@ public class ARIESRecoveryManager implements RecoveryManager {
         int numTouchedPages = 0;
 
         // TODO(proj5): generate end checkpoint record(s) for DPT and transaction table
-        //LogRecord endRecord = new EndCheckpointLogRecord(this.dirtyPageTable, );
+        for(Map.Entry<Long, Long> entry: dirtyPageTable.entrySet()){
+            long pageNum = entry.getKey();
+            boolean flag = EndCheckpointLogRecord.fitsInOneRecord(dpt.size() + 1, txnTable.size(), touchedPages.size(), numTouchedPages);
+            if(!flag){
+                LogRecord endRecord = new EndCheckpointLogRecord(dpt, txnTable, touchedPages);
+                logManager.appendToLog(endRecord);
+                dpt.clear();
+            }
+            dpt.put(pageNum, entry.getValue());
+        }
 
         for (Map.Entry<Long, TransactionTableEntry> entry : transactionTable.entrySet()) {
             long transNum = entry.getKey();
+            boolean flag = EndCheckpointLogRecord.fitsInOneRecord(dpt.size(), txnTable.size()+1, touchedPages.size(), numTouchedPages);
+            if(!flag){
+                LogRecord endRecord = new EndCheckpointLogRecord(dpt, txnTable, touchedPages);
+                logManager.appendToLog(endRecord);
+                dpt.clear();
+                txnTable.clear();
+                touchedPages.clear();
+                numTouchedPages = 0;
+            }
+            txnTable.put(transNum, new Pair<>(entry.getValue().transaction.getStatus(), entry.getValue().lastLSN));
             for (long pageNum : entry.getValue().touchedPages) {
                 boolean fitsAfterAdd;
                 if (!touchedPages.containsKey(transNum)) {
