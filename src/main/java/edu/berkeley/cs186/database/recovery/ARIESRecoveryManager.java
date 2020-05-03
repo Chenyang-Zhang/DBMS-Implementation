@@ -827,7 +827,33 @@ public class ARIESRecoveryManager implements RecoveryManager {
      */
     void restartRedo() {
         // TODO(proj5): implement
-        return;
+        Long startLSN = Long.MAX_VALUE;
+        for(Long LSN: dirtyPageTable.values()){
+            if(startLSN > LSN){
+                startLSN = LSN;
+            }
+        }
+        Iterator<LogRecord> iter = logManager.scanFrom(startLSN);
+        while(iter.hasNext()){
+            LogRecord logRecord = iter.next();
+            if(logRecord.isRedoable()){
+                if(logRecord.getPageNum().isPresent()){
+                    if(dirtyPageTable.containsKey(logRecord.getPageNum().get()) && logRecord.LSN >= dirtyPageTable.get(logRecord.getPageNum().get())){
+                        Page page = bufferManager.fetchPage(getPageLockContext(logRecord.getPageNum().get()), logRecord.getPageNum().get(), false);
+                        try{
+                            if(page.getPageLSN() < logRecord.LSN){
+                                logRecord.redo(diskSpaceManager, bufferManager);
+                            }
+                        }finally {
+                            page.unpin();
+                        }
+                    }
+                }
+                else if(logRecord.getPartNum().isPresent()){
+                    logRecord.redo(diskSpaceManager, bufferManager);
+                }
+            }
+        }
     }
 
     /**
@@ -843,7 +869,49 @@ public class ARIESRecoveryManager implements RecoveryManager {
      */
     void restartUndo() {
         // TODO(proj5): implement
-        return;
+        Queue<Pair<Long, Long>> queue = new PriorityQueue<>(new PairFirstReverseComparator());
+        for(Map.Entry<Long, TransactionTableEntry> entry : transactionTable.entrySet()){
+            if(entry.getValue().transaction.getStatus() == Transaction.Status.RECOVERY_ABORTING){
+                queue.add(new Pair(entry.getValue().lastLSN, entry.getKey()));
+            }
+        }
+        while(!queue.isEmpty()){
+            Pair<Long, Long> pair = queue.poll();
+            Long logLSN = pair.getFirst();
+            LogRecord logRecord = logManager.fetchLogRecord(logLSN);
+
+            if(logRecord.isUndoable()){
+                Pair<LogRecord, Boolean> temp = logRecord.undo(transactionTable.get(pair.getSecond()).lastLSN);
+                LogRecord CLR = temp.getFirst();
+                long LSN = logManager.appendToLog(CLR);
+                transactionTable.get(pair.getSecond()).lastLSN = LSN;
+                if(temp.getSecond()){
+                    logManager.flushToLSN(LSN);
+                }
+                CLR.redo(diskSpaceManager, bufferManager);
+                updateDPT(CLR);
+            }
+            long newLSN;
+            if (logRecord.getUndoNextLSN().isPresent()) {
+                newLSN = logRecord.getUndoNextLSN().get();
+            }
+            else {
+                newLSN = logRecord.getPrevLSN().get();
+            }
+
+            if(newLSN == 0){
+                Transaction transaction = transactionTable.get(pair.getSecond()).transaction;
+                transaction.cleanup();
+                transaction.setStatus(Transaction.Status.COMPLETE);
+                logManager.appendToLog(new EndTransactionLogRecord(transaction.getTransNum(), transactionTable.get(pair.getSecond()).lastLSN));
+                transactionTable.remove(pair.getSecond());
+            }
+            else{
+                queue.add(new Pair<>(newLSN, pair.getSecond()));
+            }
+
+        }
+
     }
 
     // TODO(proj5): add any helper methods needed
